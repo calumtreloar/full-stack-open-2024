@@ -17,8 +17,6 @@ const App = () => {
   const [selected, setSelected] = useState(anecdotes[0]);
   const [allPoints, setAllPoints] = useState(points);
 
-  const randomNumber = Math.floor(Math.random() * anecdotes.length);
-
   const handleSelected = () => {
     const randomNumber = Math.floor(Math.random() * anecdotes.length);
     setSelected(anecdotes[randomNumber]);
