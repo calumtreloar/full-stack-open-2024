@@ -4,12 +4,16 @@ import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
 import Persons from "./components/Persons";
 import personService from "./services/persons";
+import Notification from "./components/Notification";
+import Error from "./components/Error";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [filter, setFilter] = useState("");
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
     personService.getAll().then(response => {
@@ -34,6 +38,8 @@ const App = () => {
         setPersons(persons.concat(response.data));
         setNewName("");
         setNewNumber("");
+        setSuccessMessage(`Added ${newName}`);
+        setTimeout(() => setSuccessMessage(null), 3000);
       } catch (error) {
         console.error("Error creating person:", error);
       }
@@ -45,18 +51,29 @@ const App = () => {
       if (confirmed) {
         try {
           const response = await personService.update(
-            persons.find(p => p.name === newName).id,
+            persons.find(p => p.name === newName)?.id,
             personObj
           );
-          setPersons(
-            persons.map(person =>
-              person.id !== response.data.id ? person : response.data
-            )
+
+          // Check if the person still exists in the updated persons array
+          const updatedPersons = persons.map(person =>
+            person.id !== response.data.id ? person : response.data
           );
+
+          if (updatedPersons.find(p => p.name === newName)) {
+            setPersons(updatedPersons);
+            setSuccessMessage(`Added ${newName}`);
+            setTimeout(() => setSuccessMessage(null), 3000);
+          }
+
           setNewName("");
           setNewNumber("");
         } catch (error) {
           console.error("Error updating person:", error);
+          setErrorMessage(
+            `Information of ${newName} has already been removed from the server`
+          );
+          setTimeout(() => setErrorMessage(null), 3000);
         }
       }
     }
@@ -95,6 +112,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={successMessage} />
+      <Error message={errorMessage} />
       <Filter value={filter} handleFilterChange={handleFilterChange} />
 
       <h3>Add a new</h3>
