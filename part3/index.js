@@ -42,10 +42,13 @@ let persons = [
 ];
 
 app.get("/info", (req, res) => {
-  const date = new Date();
-  res.send(
-    `<p>Phonebook has info for ${persons.length} people</p><p>${date}</p>`
-  );
+  Person.find({}).then(persons => {
+    return res.send(
+      `<p>Phonebook has info for ${
+        persons.length
+      } people</p><p>${new Date()}</p>`
+    );
+  });
 });
 
 app.get("/api/persons", (request, response) => {
@@ -103,6 +106,25 @@ app.post("/api/persons", (req, res) => {
   //     error: "The name already exists in the phonebook",
   //   });
   // }
+});
+
+app.put("/api/persons/:id", (request, response, next) => {
+  const body = request.body;
+
+  const person = {
+    name: body.name,
+    number: body.number,
+  };
+
+  Person.findByIdAndUpdate(request.params.id, person, {
+    new: true,
+    runValidators: true,
+    context: "query",
+  })
+    .then(updatedPerson => {
+      response.json(updatedPerson);
+    })
+    .catch(error => next(error));
 });
 
 const errorHandler = (error, request, response, next) => {
