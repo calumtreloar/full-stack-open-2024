@@ -18,29 +18,6 @@ app.use(
   )
 );
 
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
-
 app.get("/info", (req, res) => {
   Person.find({}).then(persons => {
     return res.send(
@@ -79,48 +56,34 @@ app.delete("/api/persons/:id", (request, response, next) => {
     .catch(error => next(error));
 });
 
-app.post("/api/persons", (req, res) => {
+app.post("/api/persons", (req, res, next) => {
   const body = req.body;
-
-  if (body.name === undefined) {
-    return res.status(400).json({ error: "name missing" });
-  }
-
-  if (!body.name || !body.number) {
-    return res.status(400).json({
-      error: "The name or number is missing",
-    });
-  }
 
   const person = new Person({
     name: body.name,
     number: body.number,
   });
 
-  person.save().then(savedPerson => {
-    res.json(savedPerson);
-  });
-
-  // if (persons.some(person => person.name === body.name)) {
-  //   return res.status(400).json({
-  //     error: "The name already exists in the phonebook",
-  //   });
-  // }
+  person
+    .save()
+    .then(savedPerson => {
+      res.json(savedPerson);
+    })
+    .catch(error => next(error));
 });
 
 app.put("/api/persons/:id", (request, response, next) => {
-  const body = request.body;
+  const { name, number } = request.body;
 
-  const person = {
-    name: body.name,
-    number: body.number,
-  };
-
-  Person.findByIdAndUpdate(request.params.id, person, {
-    new: true,
-    runValidators: true,
-    context: "query",
-  })
+  Person.findByIdAndUpdate(
+    request.params.id,
+    { name, number },
+    {
+      new: true,
+      runValidators: true,
+      context: "query",
+    }
+  )
     .then(updatedPerson => {
       response.json(updatedPerson);
     })
@@ -128,10 +91,14 @@ app.put("/api/persons/:id", (request, response, next) => {
 });
 
 const errorHandler = (error, request, response, next) => {
-  console.error(error);
+  console.error(error.message);
 
   if (error.name === "CastError") {
     return response.status(400).send({ error: "malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return response.status(400).send({ error: error.message });
+  } else if (error.number === "ValidationError") {
+    return response.status(400).send({ error: error.message });
   }
 
   next(error);
@@ -143,23 +110,3 @@ const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-// const url = `mongodb+srv://tigeltoniscooked:${password}@cluster0.yntagen.mongodb.net/phonebookApp?retryWrites=true&w=majority&appName=Cluster0`;
-
-// if (process.argv.length === 3) {
-//   Person.find({}).then(result => {
-//     result.forEach(person => {
-//       console.log(`${person.name} ${person.number}`);
-//     });
-//     mongoose.connection.close();
-//   });
-// } else {
-//   const person = new Person({
-//     name: newName,
-//     number: newNumber,
-//   });
-//   person.save().then(result => {
-//     console.log(`added ${person.name} number ${person.number} to phonebook`);
-//     mongoose.connection.close();
-//   });
-// }

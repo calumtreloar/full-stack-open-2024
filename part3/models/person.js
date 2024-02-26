@@ -21,8 +21,18 @@ mongoose
   });
 
 const phonebookSchema = new mongoose.Schema({
-  name: String,
-  number: String,
+  name: { type: String, minlength: 3, required: true },
+  number: {
+    type: String,
+    validate: {
+      validator: function (number) {
+        return /^\d{2,3}-\d+$/.test(number);
+      },
+      message: "invalid phone number",
+    },
+    minlength: 8,
+    required: true,
+  },
 });
 
 phonebookSchema.set("toJSON", {
