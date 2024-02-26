@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.static("dist"));
 app.use(express.json());
 
-morgan.token("personInfo", function (req, res) {
+morgan.token("personInfo", function (req) {
   return JSON.stringify(req.body);
 });
 app.use(
@@ -34,7 +34,7 @@ app.get("/api/persons", (request, response) => {
   });
 });
 
-app.get("/api/persons/:id", (req, res) => {
+app.get("/api/persons/:id", (req, res, next) => {
   Person.findById(req.params.id)
     .then(person => {
       if (person) {
@@ -50,7 +50,7 @@ app.get("/api/persons/:id", (req, res) => {
 
 app.delete("/api/persons/:id", (request, response, next) => {
   Person.findByIdAndDelete(request.params.id)
-    .then(result => {
+    .then(() => {
       response.status(204).end();
     })
     .catch(error => next(error));
